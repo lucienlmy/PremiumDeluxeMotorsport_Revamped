@@ -11,12 +11,11 @@ Requirements:
 
 ## [ **CHANGELOG** ]
 Release v5.0.0
-- Rewritten as a **"CS"** Project
-- Ported from **_INMNativeUi_** to **LemonUI** which is much stabler
-- Fixed ALL crashing
-- Updated to **ScriptHookVDotNet V3**
--
--
+- Rewrote most scripts and core functions
+- Fully migrated the project structure from VB scripts to C#
+- Replaced INMNativeUI with LemonUI for improved stability
+- Resolved all known crash issues
+- Updated the project to ScriptHookVDotNet V3
 
 ## Credits
 ### **This project is based on the original Premium Deluxe Motorsport mod created by ImNotMentaL.** 
