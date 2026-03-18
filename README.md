@@ -11,9 +11,9 @@ Requirements:
 
 ## [ **CHANGELOG** ]
 Release v5.0.0
-- Rewrote most scripts and core functions
-- Fully migrated the project structure from VB scripts to C#
-- Replaced INMNativeUI with LemonUI for improved stability
+- Rewrote all scripts and core functions
+- Fully migrated the project structure from **VB** scripts to **C#**
+- Replaced **INMNativeUI** with **LemonUI** for improved stability
 - Resolved all known crash issues
 - Updated the project to ScriptHookVDotNet V3
 
