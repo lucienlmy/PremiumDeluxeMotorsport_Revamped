@@ -16,5 +16,34 @@ Release v5.0.0
 - Fixed ALL crashing
 - Updated to **ScriptHookVDotNet V3**
 
-Credits:
-Rockstar Games, Alexander Blade, Crosire, Guad, EnergyStyle, LetsPlayOrDy, NewTheft, Calm, LCBuffalo, Gang1111, Matt_STS, frodzet, leftas & marhex
+## Credits
+
+### Primary Credits
+- **Im Not MentaL**
+- **Rockstar Games**
+- **Alexander Blade** for **ScriptHookV**
+- **crosire** for **Community ScriptHookVDotNet**
+- **justalemon** for **LemonUI**
+
+### Contributors
+Special thanks to the following individuals who contributed alongside **Im Not MentaL** in the development of this mod:
+
+- EnergyStyle  
+- LetsPlayOrDy  
+- Calm  
+- LCBuffalo  
+- Gang1111  
+- Matt_STS  
+- frodzet  
+- leftas  
+- marhex  
+- CamxxCore  
+
+### Translation Credits
+- **Anthonyamd** — French  
+- **pnda** — German  
+- **Krazy** — Italian and Portuguese  
+- **Mell** — Korean  
+- **大雪熊OwO** — Japanese  
+- **Gixer** & **david** — Spanish  
+- **MMK_033** — Russian  
