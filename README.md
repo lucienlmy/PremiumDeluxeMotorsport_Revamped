@@ -30,7 +30,7 @@ ___________________________________
 
 ## [ **CHANGELOG** ]
 **Quick Fix v1.0.1**
-- Fixed an issue where the info popup wasn't displaying roof or door toggle functions
+- Fixed an issue where the info popup wasn't displaying the roof or door toggle functions
 
 **Release v1.0.0**
 - Initial Release
