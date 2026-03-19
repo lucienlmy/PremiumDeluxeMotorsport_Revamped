@@ -67,4 +67,8 @@ Special thanks to the following individuals who contributed alongside **Im Not M
 - **Mell** — Korean  
 - **大雪熊OwO** — Japanese  
 - **Gixer** & **david** — Spanish  
-- **MMK_033** — Russian  
+- **MMK_033** — Russian
+
+[ MIRRORS ]
+- [gta5-mods](https://www.gta5-mods.com/vehicles)
+- [Nexus Mods](https://www.nexusmods.com/gta5enhanced/mods/563)
