@@ -27,6 +27,7 @@ ___________________________________
 ### [ Planned Upcoming Features ]
 - Controller support
 - Sell vehicles at Premium Deluxe Motorsport
+- Function to search vehicles
 
 ## [ **CHANGELOG** ]
 **Quick Fix v1.0.1**
