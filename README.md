@@ -13,7 +13,7 @@ Requirements:
 **Release v1.0.0**
 - Initial Release
 
-**General changes from original Premium Deluxe Motosport**
+**General changes from original Premium Deluxe Motosport by** **ImNotMentaL:**
 - Rewrote all scripts and core functions
 - Fully migrated the project structure from **VB** scripts to **C#**
 - Replaced **INMNativeUI** with **LemonUI** for improved stability
