@@ -1196,6 +1196,7 @@ namespace PremiumDeluxeRevamped
         private void PDMeX_Tick(object sender, EventArgs e)
         {
             MenuHelper.RefreshMouseBehaviors();
+            MenuHelper.RefreshInstructionalButtons();
             MenuHelper._menuPool?.Process();
 
             if (Helper.HideHud)

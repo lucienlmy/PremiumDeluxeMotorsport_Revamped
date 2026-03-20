@@ -404,7 +404,7 @@ namespace PremiumDeluxeRevamped
                             Helper.VehPreview.Doors[VehicleDoorIndex.Trunk].Open(false, false);
                         }
                     }
-                    else if (Game.IsControlJustPressed(Helper.keyRoof) && Helper.TaskScriptStatus == 0)
+                    else if (Game.IsControlJustPressed(Helper.keyRoof) && Helper.TaskScriptStatus == 0 && MenuHelper.IsPreviewVehicleConvertible())
                     {
                         if (Helper.VehPreview.RoofState == VehicleRoofState.Closed)
                         {

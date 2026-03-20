@@ -67,6 +67,13 @@ namespace PremiumDeluxeRevamped
         private static readonly Dictionary<NativeItem, string> PreservedSubmenuAltTitles = new Dictionary<NativeItem, string>();
         private const float ViewerSpawnCleanupSearchRadius = 6.0f;
         private const float ViewerSpawnCleanupDeleteRadius = 2.9f;
+        private static readonly GTA.Math.Vector3 TestDriveSpawnPosition = new GTA.Math.Vector3(-56.79958f, -1110.868f, 26.43581f);
+        private const int TestDriveWarpRetryFrames = 30;
+        private const string ConfirmActionTestDrive = "TEST_DRIVE";
+        private const string ConfirmActionPurchase = "PURCHASE";
+        private static bool viewerActionInProgress;
+        private const int VehicleMenuBaseMaxTitleLength = 30;
+        private const int VehicleMenuMinTitleLength = 20;
 
         private static string Gxt(string key) => Game.GetLocalizedString(key);
 
@@ -225,6 +232,96 @@ namespace PremiumDeluxeRevamped
             }
 
             return value;
+        }
+
+        private static string BuildVehicleMenuTitle(string fullVehicleName, decimal price)
+        {
+            string cleanName = CleanMenuText(fullVehicleName, "Unnamed");
+            string priceText = "$" + price.ToString("N0");
+            int pricePenalty = Math.Max(0, priceText.Length - 8);
+            int maxTitleLength = Math.Max(VehicleMenuMinTitleLength, VehicleMenuBaseMaxTitleLength - pricePenalty);
+
+            if (cleanName.Length <= maxTitleLength)
+            {
+                return cleanName;
+            }
+
+            int truncatedLength = Math.Max(VehicleMenuMinTitleLength - 3, maxTitleLength - 3);
+            string truncated = cleanName.Substring(0, truncatedLength).TrimEnd();
+            return truncated + "...";
+        }
+
+        public static bool IsPreviewVehicleConvertible()
+        {
+            if (Helper.VehPreview == null || !Helper.VehPreview.Exists())
+            {
+                return false;
+            }
+
+            try
+            {
+                return Function.Call<bool>((Hash)0x52F357A30698BCCEuL, Helper.VehPreview, false);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool ShouldShowRoofInstructionalButton()
+        {
+            NativeMenu visibleMenu = GetVisibleMenu();
+            if (visibleMenu == null)
+            {
+                return false;
+            }
+
+            if (!object.ReferenceEquals(visibleMenu, VehicleMenu) &&
+                !object.ReferenceEquals(visibleMenu, ConfirmMenu) &&
+                !object.ReferenceEquals(visibleMenu, CustomiseMenu) &&
+                !object.ReferenceEquals(visibleMenu, PriColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, ClassicColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, MetallicColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, MetalColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, MatteColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, ChromeColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, PeaColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, CPriColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, ColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, SecColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, ClassicColorMenu2) &&
+                !object.ReferenceEquals(visibleMenu, MetallicColorMenu2) &&
+                !object.ReferenceEquals(visibleMenu, MetalColorMenu2) &&
+                !object.ReferenceEquals(visibleMenu, MatteColorMenu2) &&
+                !object.ReferenceEquals(visibleMenu, ChromeColorMenu2) &&
+                !object.ReferenceEquals(visibleMenu, CSecColorMenu) &&
+                !object.ReferenceEquals(visibleMenu, PlateMenu))
+            {
+                return false;
+            }
+
+            return Helper.TaskScriptStatus == 0 && IsPreviewVehicleConvertible();
+        }
+
+        public static void RefreshInstructionalButtons()
+        {
+            for (int i = 0; i < RegisteredMenus.Count; i++)
+            {
+                NativeMenu menu = RegisteredMenus[i];
+                if (menu == null)
+                {
+                    continue;
+                }
+
+                menu.Buttons.Clear();
+                AddInstructionalButtonIfValid(menu, Helper.BtnRotLeft);
+                if (ShouldShowRoofInstructionalButton())
+                {
+                    AddInstructionalButtonIfValid(menu, Helper.BtnRotRight);
+                }
+                AddInstructionalButtonIfValid(menu, Helper.BtnCamera);
+                AddInstructionalButtonIfValid(menu, Helper.BtnZoom);
+            }
         }
 
         private static string NormalizeAltTitle(string value)
@@ -576,8 +673,19 @@ namespace PremiumDeluxeRevamped
         public static void CreateConfirmMenu()
         {
             ConfirmMenu = NewMenu(CleanMenuText(Helper.GetLangEntry("PURCHASE_ORDER"), "Purchase Order"), true);
-            ConfirmMenu.Add(new NativeItem(CleanMenuText(Helper.GetLangEntry("BTN_TEST_DRIVE"), "Test Drive")));
-            ConfirmMenu.Add(new NativeItem(CleanMenuText(Gxt("ITEM_YES"), "Confirm")));
+
+            NativeItem testDriveItem = new NativeItem(CleanMenuText(Helper.GetLangEntry("BTN_TEST_DRIVE"), "Test Drive"))
+            {
+                Tag = ConfirmActionTestDrive,
+            };
+            ConfirmMenu.Add(testDriveItem);
+
+            NativeItem purchaseItem = new NativeItem(CleanMenuText(Gxt("ITEM_YES"), "Confirm"))
+            {
+                Tag = ConfirmActionPurchase,
+            };
+            ConfirmMenu.Add(purchaseItem);
+
             ResetSelection(ConfirmMenu);
             ConfirmMenu.Closed += (sender, args) =>
             {
@@ -812,11 +920,18 @@ namespace PremiumDeluxeRevamped
                 return;
             }
 
-            if (selectedItem.Title == Helper.VehicleName)
+            Tuple<string, int, string, string> t = selectedItem.Tag as Tuple<string, int, string, string>;
+            if (t == null)
             {
-                Tuple<string, int, string, string> t = (Tuple<string, int, string, string>)selectedItem.Tag;
+                return;
+            }
+
+            string selectedFullVehicleName = t.Item3 ?? selectedItem.Title;
+
+            if (string.Equals(selectedFullVehicleName, Helper.VehicleName, StringComparison.OrdinalIgnoreCase))
+            {
                 ShowOnly(ConfirmMenu);
-                Helper.VehicleName = selectedItem.Title;
+                Helper.VehicleName = selectedFullVehicleName;
                 Helper.optLastVehMake = t.Item4;
                 Helper.ShowVehicleName = true;
                 RefreshRGBColorMenuFor(CPriColorMenu, "Primary");
@@ -844,7 +959,11 @@ namespace PremiumDeluxeRevamped
         {
             try
             {
-                Tuple<string, int, string, string> t = (Tuple<string, int, string, string>)sender.Items[index].Tag;
+                Tuple<string, int, string, string> t = sender.Items[index].Tag as Tuple<string, int, string, string>;
+                if (t == null)
+                {
+                    return;
+                }
                 Helper.SelectedVehicle = t.Item3;
                 CleanupVehicleViewerArea();
                 Helper.VehPreview?.Delete();
@@ -875,7 +994,7 @@ namespace PremiumDeluxeRevamped
                     Mods(Helper.VehPreview).RimColor = (VehicleColor)r.Next(0, 160);
                 }
                 Helper.UpdateVehPreview();
-                Helper.VehicleName = sender.Items[index].Title;
+                Helper.VehicleName = t.Item3;
                 Helper.optLastVehMake = t.Item4;
                 Helper.ShowVehicleName = true;
                 Helper.VehPreview.Heading = Helper.Radius;
@@ -902,6 +1021,114 @@ namespace PremiumDeluxeRevamped
             }
         }
 
+        private static bool TryWarpPlayerIntoVehicle(Vehicle vehicle)
+        {
+            if (vehicle == null || !vehicle.Exists() || Helper.GPC == null || !Helper.GPC.Exists())
+            {
+                return false;
+            }
+
+            try { Function.Call(Hash.CLEAR_PED_TASKS_IMMEDIATELY, Helper.GPC); } catch { }
+
+            try
+            {
+                Function.Call(Hash.SET_PED_INTO_VEHICLE, Helper.GPC, vehicle, -1);
+            }
+            catch
+            {
+            }
+
+            for (int i = 0; i < TestDriveWarpRetryFrames; i++)
+            {
+                Script.Yield();
+                if (Helper.GPC.IsInVehicle(vehicle))
+                {
+                    return true;
+                }
+            }
+
+            try
+            {
+                Function.Call(Hash.TASK_WARP_PED_INTO_VEHICLE, Helper.GPC, vehicle, -1);
+            }
+            catch
+            {
+            }
+
+            for (int i = 0; i < TestDriveWarpRetryFrames; i++)
+            {
+                Script.Yield();
+                if (Helper.GPC.IsInVehicle(vehicle))
+                {
+                    return true;
+                }
+            }
+
+            return Helper.GPC.IsInVehicle(vehicle);
+        }
+
+        private static void RestoreViewerStateAfterFailedTestDrive()
+        {
+            if (Helper.VehPreview == null || !Helper.VehPreview.Exists())
+            {
+                return;
+            }
+
+            Helper.VehPreview.IsUndriveable = true;
+            Helper.VehPreview.LockStatus = VehicleLockStatus.IgnoredByPlayer;
+            Helper.VehPreview.Position = Helper.VehPreviewPos;
+            Helper.VehPreview.Heading = Helper.Radius;
+
+            try { Function.Call(Hash.SET_VEHICLE_DOORS_SHUT, Helper.VehPreview, false); } catch { }
+            try { Function.Call(Hash.SET_VEHICLE_FIXED, Helper.VehPreview); } catch { }
+
+            Helper.HideHud = true;
+            Helper.ShowVehicleName = true;
+            Helper.TaskScriptStatus = 0;
+            Helper.TestDrive = 1;
+            Helper.wsCamera.RepositionFor(Helper.VehPreview);
+            ShowOnly(ConfirmMenu);
+        }
+
+        private static bool StartTestDrive()
+        {
+            if (Helper.VehPreview == null || !Helper.VehPreview.Exists() || Helper.GPC == null || !Helper.GPC.Exists())
+            {
+                return false;
+            }
+
+            FadeOut(200);
+            Script.Wait(200);
+
+            HideAllMenus();
+            Helper.wsCamera.Stop();
+            Helper.DrawSpotLight = false;
+            Helper.HideHud = false;
+            Helper.ShowVehicleName = false;
+
+            Helper.VehPreview.IsUndriveable = false;
+            Helper.VehPreview.LockStatus = VehicleLockStatus.Unlocked;
+            Helper.VehPreview.IsPositionFrozen = false;
+            Helper.VehPreview.Position = TestDriveSpawnPosition;
+
+            try { Function.Call(Hash.SET_VEHICLE_DOORS_SHUT, Helper.VehPreview, false); } catch { }
+            try { Function.Call(Hash.SET_VEHICLE_ON_GROUND_PROPERLY, Helper.VehPreview); } catch { }
+
+            bool warpSucceeded = TryWarpPlayerIntoVehicle(Helper.VehPreview);
+            if (warpSucceeded)
+            {
+                Helper.TestDrive = 3;
+                Script.Wait(200);
+                FadeIn(200);
+                return true;
+            }
+
+            RestoreViewerStateAfterFailedTestDrive();
+            Script.Wait(200);
+            FadeIn(200);
+            return false;
+        }
+
         public static void ItemSelectHandler(NativeMenu sender, NativeItem selectedItem, int index)
         {
             try
@@ -911,67 +1138,77 @@ namespace PremiumDeluxeRevamped
                     return;
                 }
 
-                if (selectedItem.Title == Gxt("ITEM_YES"))
+                string action = selectedItem.Tag as string;
+                if ((action == ConfirmActionPurchase || action == ConfirmActionTestDrive) && viewerActionInProgress)
                 {
-                    if (Helper.PlayerCash > Helper.VehiclePrice)
+                    return;
+                }
+
+                if (action == ConfirmActionPurchase || selectedItem.Title == Gxt("ITEM_YES"))
+                {
+                    viewerActionInProgress = true;
+                    try
                     {
-                        FadeOut(200);
-                        Script.Wait(200);
-                        Helper.GP.Money = Helper.PlayerCash - Helper.VehiclePrice;
-                        HideAllMenus();
-                        Helper.wsCamera.Stop();
-                        Helper.DrawSpotLight = false;
-                        Helper.VehPreview.IsUndriveable = false;
-                        Helper.VehPreview.LockStatus = VehicleLockStatus.Unlocked;
-                        Function.Call(Hash.SET_VEHICLE_DOORS_SHUT, Helper.VehPreview, false);
-                        Helper.VehPreview.Position = new GTA.Math.Vector3(-56.79958f, -1110.868f, 26.43581f);
-                        Function.Call(Hash.TASK_WARP_PED_INTO_VEHICLE, Helper.GPC, Helper.VehPreview, -1);
-                        Helper.VehPreview.MarkAsNoLongerNeeded();
-                        Helper.VehPreview = null;
-                        Helper.HideHud = false;
-                        Script.Wait(200);
-                        FadeIn(200);
-                        Function.Call(Hash.PLAY_SOUND_FRONTEND, -1, "PROPERTY_PURCHASE", "HUD_AWARDS", false);
-                        GtaScreen.ShowSubtitle("~y~" + Helper.GetLangEntry("VEHICLE_PURCHASED") + "\n~w~" + Helper.SelectedVehicle, 4000);
-                        Helper.SelectedVehicle = null;
-                        Helper.VehicleName = null;
-                        Helper.ShowVehicleName = false;
-                        Helper.TaskScriptStatus = -1;
-                    }
-                    else
-                    {
-                        if (Game.Player.Character.Name() == "Franklin")
+                        if (Helper.PlayerCash > Helper.VehiclePrice)
                         {
-                            Helper.DisplayNotificationThisFrame(Gxt("EMSTR_55"), string.Empty, Gxt("PI_BIK_HX8"), "CHAR_BANK_FLEECA", true, Helper.IconType.RightJumpingArrow);
-                        }
-                        else if (Game.Player.Character.Name() == "Trevor")
-                        {
-                            Helper.DisplayNotificationThisFrame(Gxt("EMSTR_58"), string.Empty, Gxt("PI_BIK_HX8"), "CHAR_BANK_BOL", true, Helper.IconType.RightJumpingArrow);
+                            FadeOut(200);
+                            Script.Wait(200);
+                            Helper.GP.Money = Helper.PlayerCash - Helper.VehiclePrice;
+                            HideAllMenus();
+                            Helper.wsCamera.Stop();
+                            Helper.DrawSpotLight = false;
+                            Helper.VehPreview.IsUndriveable = false;
+                            Helper.VehPreview.LockStatus = VehicleLockStatus.Unlocked;
+                            Function.Call(Hash.SET_VEHICLE_DOORS_SHUT, Helper.VehPreview, false);
+                            Helper.VehPreview.Position = TestDriveSpawnPosition;
+                            Function.Call(Hash.SET_PED_INTO_VEHICLE, Helper.GPC, Helper.VehPreview, -1);
+                            Helper.VehPreview.MarkAsNoLongerNeeded();
+                            Helper.VehPreview = null;
+                            Helper.HideHud = false;
+                            Script.Wait(200);
+                            FadeIn(200);
+                            Function.Call(Hash.PLAY_SOUND_FRONTEND, -1, "PROPERTY_PURCHASE", "HUD_AWARDS", false);
+                            GtaScreen.ShowSubtitle("~y~" + Helper.GetLangEntry("VEHICLE_PURCHASED") + "\n~w~" + Helper.SelectedVehicle, 4000);
+                            Helper.SelectedVehicle = null;
+                            Helper.VehicleName = null;
+                            Helper.ShowVehicleName = false;
+                            Helper.TaskScriptStatus = -1;
                         }
                         else
                         {
-                            Helper.DisplayNotificationThisFrame(Gxt("EMSTR_52"), string.Empty, Gxt("PI_BIK_HX8"), "CHAR_BANK_MAZE", true, Helper.IconType.RightJumpingArrow);
+                            if (Game.Player.Character.Name() == "Franklin")
+                            {
+                                Helper.DisplayNotificationThisFrame(Gxt("EMSTR_55"), string.Empty, Gxt("PI_BIK_HX8"), "CHAR_BANK_FLEECA", true, Helper.IconType.RightJumpingArrow);
+                            }
+                            else if (Game.Player.Character.Name() == "Trevor")
+                            {
+                                Helper.DisplayNotificationThisFrame(Gxt("EMSTR_58"), string.Empty, Gxt("PI_BIK_HX8"), "CHAR_BANK_BOL", true, Helper.IconType.RightJumpingArrow);
+                            }
+                            else
+                            {
+                                Helper.DisplayNotificationThisFrame(Gxt("EMSTR_52"), string.Empty, Gxt("PI_BIK_HX8"), "CHAR_BANK_MAZE", true, Helper.IconType.RightJumpingArrow);
+                            }
                         }
                     }
+                    finally
+                    {
+                        viewerActionInProgress = false;
+                    }
                 }
-                else if (selectedItem.Title == Helper.GetLangEntry("BTN_TEST_DRIVE"))
+                else if (action == ConfirmActionTestDrive || selectedItem.Title == Helper.GetLangEntry("BTN_TEST_DRIVE"))
                 {
-                    FadeOut(200);
-                    Script.Wait(200);
-                    Function.Call(Hash.TASK_WARP_PED_INTO_VEHICLE, Helper.GPC, Helper.VehPreview, -1);
-                    HideAllMenus();
-                    Helper.wsCamera.Stop();
-                    Helper.DrawSpotLight = false;
-                    Helper.VehPreview.IsUndriveable = false;
-                    Helper.VehPreview.LockStatus = VehicleLockStatus.Unlocked;
-                    Function.Call(Hash.SET_VEHICLE_DOORS_SHUT, Helper.VehPreview, false);
-                    Helper.DisplayHelpTextThisFrame(Helper.GetLangEntry("HELP_TEST_DRIVE"));
-                    Helper.TestDrive += 1;
-                    Helper.HideHud = false;
-                    Helper.VehPreview.Position = new GTA.Math.Vector3(-56.79958f, -1110.868f, 26.43581f);
-                    Script.Wait(200);
-                    FadeIn(200);
-                    Helper.ShowVehicleName = false;
+                    viewerActionInProgress = true;
+                    try
+                    {
+                        if (StartTestDrive())
+                        {
+                            Helper.DisplayHelpTextThisFrame(Helper.GetLangEntry("HELP_TEST_DRIVE"));
+                        }
+                    }
+                    finally
+                    {
+                        viewerActionInProgress = false;
+                    }
                 }
 
                 if (selectedItem.Title == Gxt("PERSO_MOD_PER"))
@@ -1036,7 +1273,8 @@ namespace PremiumDeluxeRevamped
                     string makeName = CleanMenuText(Gxt(format[i]["make"]), format[i]["make"]);
                     string modelName = CleanMenuText(Gxt(format[i]["gxt"]), format[i]["name"]);
                     string fullVehicleName = CleanMenuText(($"{makeName} {modelName}").Trim(), format[i]["name"]);
-                    NativeItem item = new NativeItem(fullVehicleName)
+                    string vehicleMenuTitle = BuildVehicleMenuTitle(fullVehicleName, Helper.Price);
+                    NativeItem item = new NativeItem(vehicleMenuTitle)
                     {
                         AltTitle = "$" + Helper.Price.ToString("N0"),
                         Tag = Tuple.Create(format[i]["model"], (int)Helper.Price, fullVehicleName, format[i]["make"]),
