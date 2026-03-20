@@ -31,10 +31,17 @@ ___________________________________
 - Sell vehicles at Premium Deluxe Motorsport
 - Function to search vehicles
 - Better Addon Vehicle Support
-- Function to toggle headlights on/off in vehicle viewer
 - Bring back the star system when first viewing a vehicle
   
 ## [ **CHANGELOG** ]
+**Patch v1.0.2**
+- Added a gate for the Roof toggle feature so that it only pops up for convertable vehicles
+- Added menu truncation with "..." only when the display name gets too long.
+- Fixed an issue where the UI can desync and disappear.
+- Fixed test drive flow to remove a possible soft lock if the script misses the test drive warp.
+- Fixed an issue where the preview camera can bug under the map.
+- Updated vehicle list to fix duplicate names. 
+  
 **Quick Fix v1.0.1**
 - Fixed an issue where the info popup wasn't displaying the roof or door toggle functions
 
