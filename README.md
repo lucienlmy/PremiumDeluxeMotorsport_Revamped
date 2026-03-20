@@ -74,5 +74,5 @@ Special thanks to the following individuals who contributed alongside **Im Not M
 - **MMK_033** — Russian
 
 ### [ MIRRORS ]
-- [**gta5-mods**](https://www.gta5-mods.com/vehicles)
+- [**gta5-mods**](https://www.gta5-mods.com/scripts/premium-deluxe-motorsport-dealership-revamped)
 - [**Nexus Mods**](https://www.nexusmods.com/gta5enhanced/mods/563)
