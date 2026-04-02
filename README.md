@@ -25,6 +25,9 @@ ___________________________________
 - Updated vehicle list for latest GTA V Updates
 - Overall stability has been greatly improved
 - Added mouse support for selecting UI options with the mouse
+- Added vehicle search functionality.
+- Added the ability to remove performance upgrades after they have been applied.
+- Added a vehicle stats viewer that displays top speed, acceleration, braking, and traction.
 
 ### [ Planned Upcoming Features ]
 - Sell vehicles at Premium Deluxe Motorsport
